@@ -16,9 +16,34 @@ struct Topic: Identifiable, Equatable, Hashable {
     var added: Bool
     
     // set details
-    var progress = 0
     var total = 0
+    
+    private var _progress = 0
+    var progress: Int {
+        get { return _progress }
+        set {
+            if newValue > total {
+                _progress = total
+            } else if newValue < 0 {
+                _progress = 0
+            } else {
+                _progress = newValue
+            }
+        }
+    }
+
+    var progressIndicatorValue: Double {
+        if (total == 0){
+            return 0
+        } else {
+            return Double(progress) / Double(total)
+        }
+    }
+    
     var flashCards: [TopicItem]
+    var mostRecentFlashCard: UUID
+    var shuffled: Bool
+
     
     init(name: String, emoji: String? = nil, makeFlashCards: Bool = false){
         self.id = UUID()
@@ -26,6 +51,8 @@ struct Topic: Identifiable, Equatable, Hashable {
         self.emoji = emoji
         self.added = makeFlashCards ? true : false
         self.flashCards = []
+        self.mostRecentFlashCard = self.id
+        self.shuffled = false
         
         if makeFlashCards { createFlashCards() }
     }
@@ -54,8 +81,8 @@ struct Topic: Identifiable, Equatable, Hashable {
     
     mutating func createFlashCards(){
         // TODO: read data in from JSON file
-        for cat in catTypes{
-            flashCards.append(TopicItem(cat, "A feline creature with a pheontype of \(cat)"))
+        for (index, cat) in catTypes.enumerated() {
+            flashCards.append(TopicItem(cat, "A feline creature with a pheontype of \(cat)", order: index))
         }
         total = flashCards.count
     }
